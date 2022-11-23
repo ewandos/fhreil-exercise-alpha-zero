@@ -1,38 +1,41 @@
-class hexPosition(object):
+class HexPosition(object):
     """
-    The class hexPosition stores data on a hex board position. The slots of an object are: size (an integer between 2 and 26), board (an array, 0=noStone, 1=whiteStone, 2=blackStone), and winner (0=noWin, 1=whiteWin, 2=blackWin).
+    The class hexPosition stores data on a hex board position. The slots of an object are: size (an integer between 2
+    and 26), board (an array, 0=noStone, 1=whiteStone, 2=blackStone), and winner (0=noWin, 1=whiteWin, 2=blackWin).
     """
 
     def __init__(self, size=5):
         self.size = max(2, min(size, 26))
-
-        self.board = [[0 for x in range(max(2, min(size, 26)))] for y in range(max(2, min(size, 26)))]
+        self.board = [[0 for _ in range(max(2, min(size, 26)))] for _ in range(max(2, min(size, 26)))]
         self.winner = 0
+
+    def make_move(self, chosen, player):
+        self.board[chosen[0]][chosen[1]] = player
 
     def reset(self):
         """
         This method resets the hex board. All stones are removed from the board.
         """
 
-        self.board = [[0 for x in range(self.size)] for y in range(self.size)]
+        self.board = [[0 for _ in range(self.size)] for _ in range(self.size)]
         self.winner = 0
 
-    def getAdjacent(self, position):
+    def get_adjacent(self, position):
         """
         Helper function to obtain adjacent cells in the board array.
         """
 
-        u = (position[0] - 1, position[1])
-        d = (position[0] + 1, position[1])
-        r = (position[0], position[1] - 1)
-        l = (position[0], position[1] + 1)
-        ur = (position[0] - 1, position[1] + 1)
-        dl = (position[0] + 1, position[1] - 1)
+        up = (position[0] - 1, position[1])
+        down = (position[0] + 1, position[1])
+        right = (position[0], position[1] - 1)
+        left = (position[0], position[1] + 1)
+        up_right = (position[0] - 1, position[1] + 1)
+        down_left = (position[0] + 1, position[1] - 1)
 
-        return [pair for pair in [u, d, r, l, ur, dl] if
+        return [pair for pair in [up, down, right, left, up_right, down_left] if
                 max(pair[0], pair[1]) <= self.size - 1 and min(pair[0], pair[1]) >= 0]
 
-    def getActionSpace(self, recodeBlackAsWhite=False):
+    def get_action_space(self, recode_black_as_white=False):
         """
         This method returns a list of array positions which are empty (on which stones may be put).
         """
@@ -42,54 +45,24 @@ class hexPosition(object):
             for j in range(self.size):
                 if self.board[i][j] == 0:
                     actions.append((i, j))
-        if recodeBlackAsWhite:
-            return [self.recodeCoordinates(action) for action in actions]
+        if recode_black_as_white:
+            return [self.recode_coordinates(action) for action in actions]
         else:
-            return (actions)
+            return actions
 
-    def playRandom(self, player):
+    def recode_coordinates(self, coordinates):
         """
-        This method returns a uniformly randomized valid moove for the chosen player (player=1, or player=2).
+        Transforms a coordinate tuple (with respect to the board) analogously to the method recodeBlackAsWhite.
         """
-        from random import choice
+        return self.size - 1 - coordinates[1], self.size - 1 - coordinates[0]
 
-        chosen = choice(self.getActionSpace())
-        self.board[chosen[0]][chosen[1]] = player
-
-    def randomMatch(self, evaluate_when_full=False):
-        """
-        This method randomizes an entire playthrough. Mostly useful to test code functionality. If evaluate_when_full=True then the board will be completely filled before the position is evaluated. Otherwise evaluation happens after every moove.
-        """
-
-        player = 1
-
-        if evaluate_when_full:
-            for i in range(self.size ** 2):
-                self.playRandom(player)
-                if (player == 1):
-                    player = 2
-                else:
-                    player = 1
-            self.whiteWin()
-            self.blackWin()
-
-        else:
-            while self.winner == 0:
-                self.playRandom(player)
-                if (player == 1):
-                    self.whiteWin()
-                    player = 2
-                else:
-                    self.blackWin()
-                    player = 1
-
-    def prolongPath(self, path):
+    def prolong_path(self, path):
         """
         A helper function used for board evaluation.
         """
 
         player = self.board[path[-1][0]][path[-1][1]]
-        candidates = self.getAdjacent(path[-1])
+        candidates = self.get_adjacent(path[-1])
 
         # preclude loops
         candidates = [cand for cand in candidates if cand not in path]
@@ -97,9 +70,11 @@ class hexPosition(object):
 
         return [path + [cand] for cand in candidates]
 
-    def whiteWin(self, verbose=False):
+    def white_win(self, verbose=False):
         """
-        Evaluate whether the board position is a win for 'white'. Uses breadth first search. If verbose=True a winning path will be printed to the standard output (if one exists). This method may be time-consuming, especially for larger board sizes.
+        Evaluate whether the board position is a win for 'white'. Uses breadth first search. If verbose=True a winning
+        path will be printed to the standard output (if one exists). This method may be time-consuming,
+        especially for larger board sizes.
         """
 
         paths = []
@@ -115,7 +90,7 @@ class hexPosition(object):
                 return False
 
             for path in paths:
-                prolongations = self.prolongPath(path)
+                prolongations = self.prolong_path(path)
                 paths.remove(path)
 
                 for new in prolongations:
@@ -129,9 +104,11 @@ class hexPosition(object):
                         paths.append(new)
                         visited.append(new[-1])
 
-    def blackWin(self, verbose=False):
+    def black_win(self, verbose=False):
         """
-        Evaluate whether the board position is a win for 'black'. Uses breadth first search. If verbose=True a winning path will be printed to the standard output (if one exists). This method may be time-consuming, especially for larger board sizes.
+        Evaluate whether the board position is a win for 'black'. Uses breadth first search. If verbose=True a winning
+        path will be printed to the standard output (if one exists).
+        This method may be time-consuming, especially for larger board sizes.
         """
 
         paths = []
@@ -147,7 +124,7 @@ class hexPosition(object):
                 return False
 
             for path in paths:
-                prolongations = self.prolongPath(path)
+                prolongations = self.prolong_path(path)
                 paths.remove(path)
 
                 for new in prolongations:
@@ -160,6 +137,3 @@ class hexPosition(object):
                     if new[-1] not in visited:
                         paths.append(new)
                         visited.append(new[-1])
-
-# Initializing an object
-myboard = hexPosition(size=7)
