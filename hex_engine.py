@@ -9,31 +9,17 @@ class HexPosition(object):
         self.board = [[0 for _ in range(max(2, min(size, 26)))] for _ in range(max(2, min(size, 26)))]
         self.winner = 0
 
+    # ----------------------------------
+    # A I     A P I
+    # ----------------------------------
+
     def make_move(self, chosen, player):
         self.board[chosen[0]][chosen[1]] = player
 
-    def reset(self):
-        """
-        This method resets the hex board. All stones are removed from the board.
-        """
-
-        self.board = [[0 for _ in range(self.size)] for _ in range(self.size)]
-        self.winner = 0
-
-    def get_adjacent(self, position):
-        """
-        Helper function to obtain adjacent cells in the board array.
-        """
-
-        up = (position[0] - 1, position[1])
-        down = (position[0] + 1, position[1])
-        right = (position[0], position[1] - 1)
-        left = (position[0], position[1] + 1)
-        up_right = (position[0] - 1, position[1] + 1)
-        down_left = (position[0] + 1, position[1] - 1)
-
-        return [pair for pair in [up, down, right, left, up_right, down_left] if
-                max(pair[0], pair[1]) <= self.size - 1 and min(pair[0], pair[1]) >= 0]
+    def does_winner_exist(self):
+        self.white_win()
+        self.black_win()
+        return self.winner
 
     def get_action_space(self, recode_black_as_white=False):
         """
@@ -49,6 +35,33 @@ class HexPosition(object):
             return [self.recode_coordinates(action) for action in actions]
         else:
             return actions
+
+    def reset(self):
+        """
+        This method resets the hex board. All stones are removed from the board.
+        """
+
+        self.board = [[0 for _ in range(self.size)] for _ in range(self.size)]
+        self.winner = 0
+
+    # ----------------------------------
+    # E N G I N E   F U N C T I O N S
+    # ----------------------------------
+
+    def get_adjacent(self, position):
+        """
+        Helper function to obtain adjacent cells in the board array.
+        """
+
+        up = (position[0] - 1, position[1])
+        down = (position[0] + 1, position[1])
+        right = (position[0], position[1] - 1)
+        left = (position[0], position[1] + 1)
+        up_right = (position[0] - 1, position[1] + 1)
+        down_left = (position[0] + 1, position[1] - 1)
+
+        return [pair for pair in [up, down, right, left, up_right, down_left] if
+                max(pair[0], pair[1]) <= self.size - 1 and min(pair[0], pair[1]) >= 0]
 
     def recode_coordinates(self, coordinates):
         """
